@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Проект с Spline</title>
+    <style>
+        /* Ваши существующие стили прелоадера */
+        .preLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+            opacity: 1;
+        }
+
+        .preLoader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Контейнер для Spline */
+        .spline-container {
+            width: 100%;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .spline-container.loaded {
+            opacity: 1;
+        }
+
+        /* Ваши стили Macbook прелоадера */
+        /* ... */
+    </style>
+</head>
+
+<body>
+    <!-- Прелоадер -->
+    <div class="preLoader preLoaderNormal">
+        <div class="macbook__topBord">
+            <!-- ... ваш код прелоадера ... -->
+        </div>
+    </div>
+
+    <!-- Контейнер для Spline -->
+    <div class="spline-container">
+        <script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.38/build/spline-viewer.js"></script>
+        <spline-viewer url="https://prod.spline.design/b0JTNJT2e4L6q63U/scene.splinecode" loading-anim-type="none"
+            events-target="global">
+        </spline-viewer>
+    </div>
+
+    <!-- Скрипт для проверки загрузки -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const preloader = document.querySelector('.preLoader');
+            const splineContainer = document.querySelector('.spline');
+            const splineViewer = document.querySelector('spline-viewer');
+
+            // 1. Проверяем загрузку Spline Viewer
+            const checkSplineLoaded = () => {
+                return new Promise((resolve) => {
+                    // Проверяем наличие внутреннего canvas
+                    if (splineViewer.shadowRoot.querySelector('canvas')) {
+                        return resolve();
+                    }
+
+                    // Наблюдатель за изменениями внутри shadowDOM
+                    const observer = new MutationObserver(() => {
+                        if (splineViewer.shadowRoot.querySelector('canvas')) {
+                            observer.disconnect();
+                            resolve();
+                        }
+                    });
+
+                    observer.observe(splineViewer.shadowRoot, {
+                        childList: true,
+                        subtree: true
+                    });
+                });
+            };
+
+            // 2. Ждем полной загрузки
+            Promise.all([
+                checkSplineLoaded(),
+                new Promise(resolve => window.addEventListener('load', resolve))
+            ]).then(() => {
+                // Показываем Spline
+                splineContainer.classList.add('loaded');
+
+                // Скрываем прелоадер
+                preloader.classList.add('hidden');
+
+                // Удаляем прелоадер через 0.5s (после анимации исчезновения)
+                setTimeout(() => {
+                    preloader.remove();
+                }, 500);
+            }).catch(error => {
+                console.error('Ошибка загрузки:', error);
+                preloader.remove();
+            });
+        });
+
+
+
+
+        // После загрузки можно добавить:
+        const error404 = document.createElement('div');
+        error404.className = 'error-404';
+        error404.textContent = '404';
+        splineViewer.shadowRoot.appendChild(error404);
+    </script>
+</body>
+
+</html>
